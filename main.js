@@ -69,8 +69,6 @@ const app = {
     this.render()
   },
   
- 
-  
   createRenderer() {
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize( window.innerWidth, window.innerHeight )
@@ -88,10 +86,73 @@ const app = {
     
   },
   
+  animate() {
+    for (let i = 0; i < this.gridSize; i++) {
+      this.liveNeighborMap[i] = []
+
+      for (let j = 0; j < this.gridSize; j++) {
+        this.liveNeighborMap[i][j] = 0
+
+        //check 4 directions
+        if (i !== 0 && this.currentGrid[i-1][j] === 1) this.liveNeighborMap[i][j]++  //left 
+        if (i+1 !== this.gridSize && this.currentGrid[i+1][j] === 1) this.liveNeighborMap[i][j]++ //right
+        if (j !== 0 && this.currentGrid[i][j-1] === 1) this.liveNeighborMap[i][j]++  //up 
+        if (j+1 !== this.gridSize && this.currentGrid[i][j+1] === 1) this.liveNeighborMap[i][j]++ //down  
+      }
+    }
+
+    if (this.debug) {
+      if (!this.once) {
+        console.log(this.liveNeighborMap)
+        this.once = true
+      }
+    }
+
+
+    // Determine nextGrid
+    for (let i = 0; i < this.gridSize; i++) {
+      this.nextGrid[i] = []
+
+      for (let j = 0; j < this.gridSize; j++) {
+        if (this.currentGrid[i][j] === 0){ // DEAD
+          if (this.liveNeighborMap[i][j] === 3) {
+            this.nextGrid[i][j] = 1
+          }
+          else {
+            this.nextGrid[i][j] = 0
+          }
+        }
+
+        if (this.currentGrid[i][j] === 1) { //ALIVE
+          if (this.liveNeighborMap[i][j] < 2) {
+            this.nextGrid[i][j] = 0
+          } 
+          else if (this.liveNeighborMap[i][j] > 3) {
+            this.nextGrid[i][j] = 0
+          } 
+          else {  // 2 or 3
+            this.nextGrid[i][j] = 1
+          } 
+        }          
+      }
+    }
+
+//    if (debug) {
+//      if (!once2) {
+//        console.log(nextGrid)
+//        once2 = true
+//      }
+//    }
+
+    let swap = this.currentGrid
+    this.currentGrid = this.nextGrid
+    this.nextGrid = swap
+
+  },
   
   render() {
     window.requestAnimationFrame( this.render )
-    //this.animate();
+    //this.animate()
     
     // change positions
     for (let i = 0; i < this.gridSize; i++) {
@@ -101,10 +162,10 @@ const app = {
         this.meshes[i][j].rotation.y += .005
         
         // change to correct color
-        if ( this.currentGrid[i][j] == 0 )  // if alive
-          this.meshes[i][j].material.color.setHex( 0x999900 )
-        else if ( this.currentGrid[i][j] == 1 ) // if dead
-           this.meshes[i][j].material.color.setHex( 0x404040 )
+        if ( this.currentGrid[i][j] == 0 )  // if dead
+          this.meshes[i][j].material.color.setHex( 0x404040 )
+        else if ( this.currentGrid[i][j] == 1 ) // if alive
+           this.meshes[i][j].material.color.setHex( 0x999900 )
         
         if (i == 0) {
           this.meshes[i][j].position.x = 0
@@ -113,9 +174,7 @@ const app = {
         this.meshes[i][j].position.x = this.meshes[i - 1][j].position.x + 1
           
       }
-    }
-    
-    
+    }   
     
     this.renderer.render( this.scene, this.camera )  
   }
