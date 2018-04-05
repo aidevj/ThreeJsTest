@@ -3,12 +3,26 @@ const THREE = require( 'three' )
 
 const app = {
   init() {
-    this.population = 20
-    this.height = 2
-    this.width = 5
+    this.gridSize = 5
     
     this.geometries = []
     this.meshes = []
+    
+    this.currentGrid = []
+    this.nextGrid = []
+    this.liveNeighborMap = []
+    
+    // Asssign random values to each cell initially 
+    for (let i = 0; i < this.gridSize; i++) {
+        this.currentGrid[i] = [];
+        this.nextGrid[i] = [];
+
+        for (let j = 0; j < this.gridSize; j++) {
+            this.currentGrid [i][j] = Math.random() > .5 ? 1 : 0;
+            this.nextGrid[i][j] = 0;
+        }
+    }
+    
     
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(
@@ -19,42 +33,32 @@ const app = {
     )
     
     this.camera.position.z = 5
+    this.camera.position.x = 2
+    this.camera.position.y = -1
     
 	this.createRenderer()
     this.createLights()
     
     const material = new THREE.MeshPhongMaterial({ color:0x009999 })
     const materialDead = new THREE.MeshPhongMaterial({ color:0x000000 })
-
     
-    // MAKE MULTIPLE IN A LOOP
-    for (let i = 0; i < this.width; i++) {
-      this.geometries[i] = new THREE.SphereGeometry( .5,.5,.5 )
-      this.meshes[i] = new THREE.Mesh( this.geometries[i], material )
+    // Make grid of geometry
+    for (let i = 0; i < this.gridSize; i++) {
+      this.geometries[i] = []
+      this.meshes[i] = []
+      
+      for (let j = 0; j < this.gridSize; j++){
+        this.geometries[i][j] = new THREE.IcosahedronGeometry( .5, 0 )
+        this.meshes[i][j] = new THREE.Mesh( this.geometries[i][j], material )
+      }
     }
     
     // add all to scene
-    for (let i = 0; i < this.width; i++) {
-      this.scene.add ( this.meshes[i] )
+    for (let i = 0; i < this.gridSize; i++) {
+      for (let j = 0; j < this.gridSize; j++){
+        this.scene.add ( this.meshes[i][j] )
+      }
     }
-    
-  //////// 2D doesnt work
-//    for (let i = 0; i < this.width; i++) {
-//      this.geometries[i] = []
-//      this.meshes[i] = []
-//      
-//      for (let j = 0; i < this.height; j++){
-//        this.geometries[i][j] = new THREE.BoxGeometry( .5,.5,.5 )
-//        this.meshes[i][j] = new THREE.Mesh( this.geometries[i][j], material )
-//      }
-//    }
-    
-    // add all to scene
-//    for (let i = 0; i < this.width; i++) {
-//      for (let j = 0; j < this.height; j++){
-//        this.scene.add ( this.meshes[i][j] )
-//      }
-//    }
     
     
     this.render()
@@ -81,22 +85,20 @@ const app = {
     window.requestAnimationFrame( this.render )
     
     // change positions
-    for (let i = 0; i < this.width; i++) {
-      if (i != 0) {
-        this.meshes[i].position.x = this.meshes[i - 1].position.x + 1.1
-        //this.meshes[i][j].position.y = j
+    for (let i = 0; i < this.gridSize; i++) {
+      for (let j = 0; j < this.gridSize; j++){
+        this.meshes[i][j].position.y = j
+        this.meshes[i][j].rotation.x += .005
+        this.meshes[i][j].rotation.y += .005
+        
+        if (i == 0) {
+          this.meshes[i][j].position.x = 0
+          continue
+        }
+        this.meshes[i][j].position.x = this.meshes[i - 1][j].position.x + 1
+          
       }
     }
-    
-    
-//    for (let i = 0; i < this.width; i++) {
-//      for (let j = 0; j < this.height; j++){
-//        if (i != 0) {
-//          this.meshes[i][j].position.x = this.meshes[i - 1][j].position.x + 1
-//          //this.meshes[i][j].position.y = j
-//        }
-//      }
-//    }
     
     
     
